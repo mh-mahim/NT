@@ -10,7 +10,7 @@
     
     <style>
         /* Material Design 3 Light & Dark Colors */
-        :root {
+        :root{
             --md-sys-color-primary: #006493;
             --md-sys-color-on-primary: #ffffff;
             --md-sys-color-primary-container: #cae6ff;
@@ -405,13 +405,31 @@
         <div id="login-screen" class="container">
             <div class="card" style="text-align: center; max-width: 400px; margin: 0 auto;">
                 <span class="material-symbols-outlined" style="font-size: 48px; color: var(--md-sys-color-primary);">lock</span>
-                <h2>Admin Access</h2>
-                <p>Please enter your PIN to unlock the tool.</p>
-                <input type="password" id="pin-input" class="md-input" placeholder="Enter PIN..." onkeypress="handleEnter(event)">
-                <div id="error-msg">Incorrect PIN. Try again.</div>
+                <h2>Protected</h2>
+                <p>Please enter Password to unlock the tool.</p>
+                <input type="password" id="pin-input" class="md-input" placeholder="Enter Password..." onkeypress="handleEnter(event)">
+                <div id="error-msg">Incorrect Password. Try again.</div>
                 <button class="md-btn" onclick="checkPin()" style="width: 100%;">
                     <span class="material-symbols-outlined">login</span> Unlock
                 </button>
+
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--md-sys-color-surface-variant);">
+                    <div style="font-size: 14px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span class="material-symbols-outlined" style="color: #FF8E08; font-size: 18px;">favorite</span>
+                        <span style="font-weight: 500;">সাপোর্ট করুন (Donate)</span>
+                    </div>
+                    
+                    <div onclick="copyBkashNumber()" style="display: flex; align-items: center; justify-content: space-between; background-color: rgba(226, 19, 110, 0.1); border: 1px solid #E2136E; border-radius: 12px; padding: 10px 16px; cursor: pointer; transition: 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="background-color: #E2136E; color: #FFFFFF; font-weight: 700; font-size: 12px; padding: 4px 8px; border-radius: 8px; letter-spacing: 0.5px;">bKash</span>
+                            <span style="color: var(--md-sys-color-on-surface); font-size: 16px; font-weight: 700;">+8801774786424</span>
+                        </div>
+                        <span class="material-symbols-outlined" style="color: #E2136E; font-size: 20px;">content_copy</span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 10px; margin-bottom: 0;">
+                        এই টুলটি উপকারে আসলে সাপোর্ট করতে পারেন ☕
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -518,9 +536,9 @@
 
     <footer class="footer">
         <div class="container" style="margin: 0 auto;">
-            <p style="margin: 0 0 8px 0;">&copy; 2026 M. H. Mahim. All rights reserved.</p>
+            <p style="margin: 0 0 8px 0;">&copy; 2026 All rights reserved.</p>
             <p style="margin: 0; font-size: 13px;">
-                Developed with <span style="color: #ba1a1a;">&hearts;</span> by 
+                Developed <span style="color: #ba1a1a;">&hearts;</span> by 
                 <a href="https://mhmahim.me" target="_blank">M. H. Mahim</a>
             </p>
         </div>
@@ -554,6 +572,10 @@
             } else {
                 document.getElementById('error-msg').style.display = 'block';
             }
+        }
+
+        function copyBkashNumber() {
+            copyToClipboard("+8801774786424", "বিকাশ নম্বর কপি হয়েছে! ধন্যবাদ ❤️");
         }
 
         function switchTab(tabId, btnElement) {
@@ -857,4 +879,3 @@
     </script>
 </body>
 </html>
-
