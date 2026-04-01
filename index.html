@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Number Tools | M. H. MAHIM</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/libphonenumber-js/1.10.51/libphonenumber-js.min.js"></script>
+    
+    <style>
+        /* Color Variables */
+        :root {
+            --md-sys-color-primary: #4a6b38;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #cbf3af;
+            --md-sys-color-on-primary-container: #0c2000;
+            --md-sys-color-surface: #fafdf5; 
+            --md-sys-color-on-surface: #1a1c18;
+            --md-sys-color-surface-variant: #e2e4d9;
+            --md-sys-color-on-surface-variant: #44483d;
+            --md-sys-color-outline: #75786c;
+            --md-sys-color-error: #ba1a1a;
+            --md-sys-color-surface-container: #f0f3eb; 
+            --md-sys-color-success: #386a20; 
+            --md-sys-color-on-success: #ffffff;
+            --glass-bg: rgba(250, 253, 245, 0.8);
+        }
+
+        [data-theme="dark"] {
+            --md-sys-color-primary: #afd695;
+            --md-sys-color-on-primary: #1e370e;
+            --md-sys-color-primary-container: #335022;
+            --md-sys-color-on-primary-container: #cbf3af;
+            --md-sys-color-surface: #232621; 
+            --md-sys-color-on-surface: #e2e3df;
+            --md-sys-color-surface-variant: #44483d;
+            --md-sys-color-on-surface-variant: #c4c8bc;
+            --md-sys-color-outline: #8e9285;
+            --md-sys-color-error: #ffb4ab;
+            --md-sys-color-surface-container: #1a1d18; 
+            --md-sys-color-success: #8ac76b; 
+            --md-sys-color-on-success: #0c3900;
+            --glass-bg: rgba(35, 38, 33, 0.8);
+        }
+
+        body { font-family: 'Roboto', sans-serif; background-color: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; transition: background-color 0.4s ease, color 0.4s ease; }
+
+        /* Animations */
+        @keyframes gradientLoop { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes fadeInSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInSlideDown { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Header */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; width: calc(100% - 32px); margin: 16px auto; padding: 16px 24px; box-sizing: border-box; background: linear-gradient(-45deg, var(--md-sys-color-primary), var(--md-sys-color-success), var(--md-sys-color-primary)); background-size: 200% 200%; animation: gradientLoop 8s ease infinite; color: var(--md-sys-color-on-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.15); position: sticky; top: 16px; border-radius: 24px; z-index: 1000; }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 20px; }
+        @media (max-width: 600px) { .top-bar { width: calc(100% - 16px); margin: 8px auto; top: 8px; padding: 12px 16px; border-radius: 20px; } .header-title { font-size: 16px; } }
+
+        .icon-btn-header { background: none; border: none; color: inherit; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 50%; transition: 0.3s ease; }
+        .icon-btn-header:hover { background-color: rgba(255, 255, 255, 0.2); transform: scale(1.1); }
+        .notification-badge { position: absolute; top: 2px; right: 2px; background: #ff4d4d; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; display: none; border: 2px solid var(--md-sys-color-primary); }
+
+        /* Auth Containers */
+        #auth-container { display: flex; flex: 1; align-items: center; justify-content: center; padding: 20px; position: relative; overflow: hidden; min-height: 60vh; }
+        .auth-view { background-color: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-surface-variant); border-radius: 24px; padding: 32px 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); width: 100%; max-width: 420px; box-sizing: border-box; position: absolute; text-align: center; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); display: none; }
+        .auth-view.active { display: block; position: relative; animation: fadeInSlideUp 0.5s ease; }
+        .auth-icon-wrapper { background: var(--md-sys-color-primary-container); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .pending-spinner { width: 60px; height: 60px; border: 4px solid var(--md-sys-color-surface-variant); border-top-color: var(--md-sys-color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 24px; }
+
+        /* Inputs & Buttons */
+        .md-input { width: 100%; padding: 16px; border: 1px solid var(--md-sys-color-outline); border-radius: 12px; font-size: 16px; font-family: 'Roboto', sans-serif; box-sizing: border-box; margin-bottom: 16px; background: transparent; color: var(--md-sys-color-on-surface); resize: vertical; transition: all 0.3s ease; }
+        .md-input:focus { outline: none; border-color: var(--md-sys-color-primary); box-shadow: 0 0 0 4px rgba(74, 107, 56, 0.15); transform: translateY(-2px); }
+        [data-theme="dark"] .md-input:focus { box-shadow: 0 0 0 4px rgba(175, 214, 149, 0.15); }
+
+        .md-btn { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; border-radius: 100px; padding: 14px 24px; font-size: 15px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; white-space: nowrap; }
+        .md-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.15); opacity: 0.95; }
+        .md-btn:active { transform: translateY(0) scale(0.97); }
+        .md-btn-outline { background-color: transparent; color: var(--md-sys-color-primary); border: 2px solid var(--md-sys-color-primary); }
+        
+        .md-btn-link { background: var(--md-sys-color-surface-variant); border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-surface); font-weight: 600; cursor: pointer; font-size: 14px; padding: 12px 20px; border-radius: 100px; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box; }
+        .md-btn-link:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border-color: var(--md-sys-color-primary); transform: translateY(-2px); }
+
+        /* Main Content & Welcome Banner */
+        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 24px 16px; box-sizing: border-box; }
+        .container { width: 100%; max-width: 800px; }
+
+        .welcome-banner { width: 100%; text-align: left; margin-bottom: 24px; padding: 0 8px; display: none; animation: fadeInSlideUp 0.5s ease; }
+        .welcome-banner h2 { margin: 0; font-size: 24px; color: var(--md-sys-color-primary); display: flex; align-items: center; gap: 8px; }
+
+        .tabs-container { display: flex; background-color: var(--md-sys-color-surface); border-radius: 100px; padding: 4px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); width: 100%; }
+        .tab-btn { flex: 1; padding: 12px 16px; background: transparent; border: none; border-radius: 100px; color: var(--md-sys-color-on-surface-variant); font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; }
+        .tab-btn:hover { background-color: var(--md-sys-color-surface-variant); }
+        .tab-btn.active { background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); font-weight: 700; transform: scale(1.02); }
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: block; animation: fadeInSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .card { background-color: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-surface-variant); border-radius: 24px; padding: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); width: 100%; margin-bottom: 24px; box-sizing: border-box; transition: transform 0.3s ease; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .card > h2 { margin-top: 0; color: var(--md-sys-color-on-surface); text-align: center; }
+        .card > p.desc { color: var(--md-sys-color-on-surface-variant); font-size: 15px; font-weight: 500; text-align: center; margin-bottom: 24px; line-height: 1.5; }
+
+        .row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .row > * { flex: 1; min-width: 250px; }
+        .file-upload-wrapper { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .hidden-file-input { display: none; }
+
+        .paste-btn { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border: 1px solid var(--md-sys-color-primary); border-radius: 100px; padding: 6px 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: 0.3s; }
+        .paste-btn:hover { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); transform: translateY(-2px); }
+
+        /* Result Cards */
+        .country-card { background-color: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-surface-variant); border-radius: 16px; padding: 16px; margin-bottom: 16px; transition: transform 0.3s ease, box-shadow 0.3s ease; animation: fadeInSlideUp 0.4s ease forwards; }
+        .country-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+        .country-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: 0.2s; gap: 12px; }
+        .accordion-body { display: none; padding-top: 16px; border-top: 1px dashed var(--md-sys-color-surface-variant); margin-top: 12px; animation: fadeInSlideUp 0.3s ease forwards; }
+        .card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; width: 100%; }
+        .card-actions .md-btn { padding: 12px 6px; font-size: 13px; width: 100%; background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        .number-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+        .number-row { display: flex; justify-content: space-between; align-items: center; background-color: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant); padding: 10px 16px; border-radius: 8px; font-size: 15px; font-family: monospace; }
+        
+        .icon-btn { background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; transition: 0.2s; }
+        .icon-btn:hover { background-color: rgba(0, 0, 0, 0.1); transform: scale(1.1); }
+        [data-theme="dark"] .icon-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .header-icon-btn { background-color: var(--md-sys-color-surface-variant); color: var(--md-sys-color-primary); border: none; border-radius: 8px; padding: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+
+        .invalid-box { background-color: rgba(186, 26, 26, 0.08); border: 1px solid var(--md-sys-color-error); border-radius: 16px; padding: 16px; margin-top: 24px; display: none; text-align: left; }
+        .stats-box { background-color: rgba(56, 106, 32, 0.1); border: 1px solid var(--md-sys-color-success); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: none; color: var(--md-sys-color-success); font-weight: 500; text-align: center; }
+        .payterm-badge { font-size: 12px; background-color: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant); padding: 2px 8px; border-radius: 12px; margin-left: 8px; font-weight: 500; display: inline-block; margin-top: 4px; }
+
+        /* Help Section */
+        .help-section { background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border-radius: 16px; margin-top: 24px; text-align: left; overflow: hidden; transition: transform 0.3s ease; }
+        .help-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; cursor: pointer; user-select: none; }
+        .help-header h3 { margin: 0; display: flex; align-items: center; gap: 8px; }
+        .help-body { display: none; padding: 0 20px 20px 20px; border-top: 1px dashed rgba(0,0,0,0.1); margin-top: 4px; }
+        .help-body ol { margin: 16px 0 0 0; padding-left: 20px; line-height: 1.6; }
+
+        /* Modals & Top Toast */
+        #custom-modal-overlay, #admin-panel-overlay, #profile-panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; z-index: 6000; align-items: center; justify-content: center; }
+        .custom-modal { background: var(--md-sys-color-surface); width: 90%; max-width: 380px; border-radius: 28px; padding: 32px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.9); opacity: 0; transition: all 0.3s ease; }
+        .custom-modal.show { transform: scale(1); opacity: 1; }
+        .modal-icon { font-size: 48px; margin-bottom: 16px; }
+        .modal-icon.error { color: var(--md-sys-color-error); }
+        .modal-icon.success { color: var(--md-sys-color-success); }
+        .modal-icon.info { color: var(--md-sys-color-primary); }
+        .modal-title { font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: var(--md-sys-color-on-surface); }
+        .modal-message { font-size: 15px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin: 0 0 24px 0; }
+
+        /* Admin Panel Styles (Enhanced) */
+        .admin-modal { max-width: 700px; padding: 24px; text-align: left; max-height: 85vh; display: flex; flex-direction: column; width: 95%; }
+        .admin-stats-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .stat-card { background: var(--md-sys-color-surface-variant); padding: 12px; border-radius: 12px; flex: 1; text-align: center; min-width: 80px; border: 1px solid var(--md-sys-color-outline); }
+        .stat-num { font-size: 20px; font-weight: bold; color: var(--md-sys-color-primary); margin: 0; }
+        .stat-label { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 0 0; text-transform: uppercase; }
+        
+        .admin-filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .admin-search { flex: 1; padding: 10px 16px; border-radius: 100px; border: 1px solid var(--md-sys-color-outline); background: transparent; color: var(--md-sys-color-on-surface); min-width: 150px; }
+        .filter-btn { padding: 8px 16px; border-radius: 100px; border: 1px solid var(--md-sys-color-outline); background: transparent; color: var(--md-sys-color-on-surface); cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .filter-btn.active { background: var(--md-sys-color-primary); color: white; border-color: var(--md-sys-color-primary); }
+
+        .batch-actions-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .batch-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; transition: 0.3s; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); }
+        .batch-btn:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        .batch-btn.danger:hover { background: var(--md-sys-color-error); color: white; }
+        .batch-btn.highlight { background: var(--md-sys-color-primary); color: white; border: 1px solid var(--md-sys-color-primary); }
+        .batch-btn.highlight:hover { background: var(--md-sys-color-success); }
+
+        .admin-user-list { overflow-y: auto; flex: 1; border-top: 1px solid var(--md-sys-color-surface-variant); }
+        .user-row-admin { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--md-sys-color-surface-variant); flex-wrap: wrap; gap: 12px; }
+        .user-info { flex: 1; min-width: 200px; }
+        .user-name { font-weight: 700; color: var(--md-sys-color-on-surface); font-size: 16px; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; }
+        .user-email { color: var(--md-sys-color-on-surface-variant); font-size: 13px; margin: 0; display: flex; align-items: center; gap: 4px; }
+        .user-meta { color: var(--md-sys-color-outline); font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;}
+        
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+        .status-badge.pending { background: #ff9800; color: #fff; }
+        .status-badge.active { background: var(--md-sys-color-success); color: #fff; }
+        .status-badge.inactive { background: var(--md-sys-color-error); color: #fff; }
+        
+        .admin-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .admin-btn { padding: 6px 12px; font-size: 13px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        .admin-btn.approve { background: var(--md-sys-color-success); color: white; }
+        .admin-btn.block { background: #ff9800; color: white; }
+        .admin-btn.delete { background: var(--md-sys-color-error); color: white; }
+
+        /* Add User Form inside Admin Panel */
+        .add-user-section { background: rgba(0,0,0,0.05); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--md-sys-color-outline); display: none; animation: fadeInSlideUp 0.3s ease; }
+        [data-theme="dark"] .add-user-section { background: rgba(255,255,255,0.05); }
+
+        .toast { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background-color: var(--md-sys-color-on-surface); color: var(--md-sys-color-surface); padding: 12px 24px; border-radius: 100px; font-size: 14px; display: none; z-index: 5000; box-shadow: 0 6px 20px rgba(0,0,0,0.2); font-weight: 500; white-space: nowrap; animation: fadeInSlideDown 0.3s ease forwards; }
+
+        #global-loader { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--glass-bg); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .spinner { width: 48px; height: 48px; border: 5px solid var(--md-sys-color-primary-container); border-top-color: var(--md-sys-color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+
+        .footer { margin-top: auto; padding: 32px 16px; text-align: center; }
+        .telegram-btn { display: inline-flex; align-items: center; gap: 8px; background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); padding: 10px 20px; border-radius: 100px; text-decoration: none; font-weight: 600; font-size: 15px; transition: all 0.3s ease; margin-bottom: 16px; }
+        .telegram-btn:hover { transform: scale(1.05) translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+        .copyright-badge { background-color: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant); padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 500; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div id="global-loader"><div class="spinner"></div></div>
+
+    <div id="custom-modal-overlay">
+        <div class="custom-modal" id="custom-modal">
+            <span class="material-symbols-outlined modal-icon" id="modal-icon">info</span>
+            <h3 class="modal-title" id="modal-title">Notice</h3>
+            <p class="modal-message" id="modal-message">Message goes here</p>
+            <button class="md-btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <div id="profile-panel-overlay">
+        <div class="custom-modal" id="profile-panel-modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 class="modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">account_circle</span> My Account</h3>
+                <button class="icon-btn" onclick="closeProfilePanel()"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 16px; padding: 16px; background: var(--md-sys-color-surface-variant); border-radius: 12px;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: var(--md-sys-color-on-surface); font-size: 16px;" id="disp-profile-name">Name</p>
+                <p style="margin: 0; color: var(--md-sys-color-on-surface-variant); font-size: 14px;" id="disp-profile-email">Email</p>
+            </div>
+            
+            <div style="text-align: left; border-top: 1px dashed var(--md-sys-color-surface-variant); padding-top: 16px;">
+                <h4 style="margin: 0 0 12px 0; color: var(--md-sys-color-on-surface); font-size: 15px; display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 18px;">lock_reset</span> Change Password</h4>
+                
+                <div style="position: relative; margin-bottom: 12px;">
+                    <input type="password" id="profile-current-pass" class="md-input" placeholder="Current Password" style="padding: 10px 40px 10px 12px; margin-bottom: 0;">
+                    <span class="material-symbols-outlined" onclick="togglePass('profile-current-pass', this)" style="position: absolute; right: 12px; top: 12px; cursor: pointer; color: var(--md-sys-color-outline); font-size: 20px;">visibility_off</span>
+                </div>
+                <div style="position: relative; margin-bottom: 12px;">
+                    <input type="password" id="profile-new-pass" class="md-input" placeholder="New Password" style="padding: 10px 40px 10px 12px; margin-bottom: 0;">
+                    <span class="material-symbols-outlined" onclick="togglePass('profile-new-pass', this)" style="position: absolute; right: 12px; top: 12px; cursor: pointer; color: var(--md-sys-color-outline); font-size: 20px;">visibility_off</span>
+                </div>
+                <div style="position: relative; margin-bottom: 16px;">
+                    <input type="password" id="profile-confirm-pass" class="md-input" placeholder="Confirm New Password" style="padding: 10px 40px 10px 12px; margin-bottom: 0;">
+                    <span class="material-symbols-outlined" onclick="togglePass('profile-confirm-pass', this)" style="position: absolute; right: 12px; top: 12px; cursor: pointer; color: var(--md-sys-color-outline); font-size: 20px;">visibility_off</span>
+                </div>
+                <button class="md-btn" style="width: 100%; padding: 12px;" onclick="updateUserPassword()">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-panel-overlay">
+        <div class="custom-modal admin-modal" id="admin-panel-modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 class="modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">admin_panel_settings</span> Admin Dashboard</h3>
+                <button class="icon-btn" onclick="closeAdminPanel()"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            
+            <div class="admin-stats-row">
+                <div class="stat-card"><p class="stat-num" id="stat-total">0</p><p class="stat-label">Total</p></div>
+                <div class="stat-card"><p class="stat-num" id="stat-active" style="color: var(--md-sys-color-success);">0</p><p class="stat-label">Active</p></div>
+                <div class="stat-card"><p class="stat-num" id="stat-pending" style="color: #ff9800;">0</p><p class="stat-label">Pending</p></div>
+                <div class="stat-card"><p class="stat-num" id="stat-blocked" style="color: var(--md-sys-color-error);">0</p><p class="stat-label">Blocked</p></div>
+            </div>
+
+            <div class="batch-actions-row">
+                <button class="batch-btn highlight" onclick="showAddUserForm()"><span class="material-symbols-outlined" style="font-size:18px;">person_add</span> Add User</button>
+                <button class="batch-btn" onclick="approveAllPending()"><span class="material-symbols-outlined" style="font-size:18px;">done_all</span> Approve Pending</button>
+                <button class="batch-btn danger" onclick="clearAllBlocked()"><span class="material-symbols-outlined" style="font-size:18px;">delete_sweep</span> Clear Blocked</button>
+                <button class="batch-btn" onclick="exportUsersCSV()"><span class="material-symbols-outlined" style="font-size:18px;">download</span> Export CSV</button>
+            </div>
+
+            <div class="add-user-section" id="admin-add-user-section">
+                <h4 style="margin: 0 0 12px 0; color: var(--md-sys-color-primary); display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined">person_add</span> Create New Account (Active)</h4>
+                <input type="text" id="new-user-name" class="md-input" placeholder="User Full Name" style="padding: 10px; margin-bottom: 12px; border-radius: 8px;">
+                <input type="email" id="new-user-email" class="md-input" placeholder="Email Address" style="padding: 10px; margin-bottom: 12px; border-radius: 8px;">
+                <input type="text" id="new-user-pass" class="md-input" placeholder="Password (Min. 6 characters)" style="padding: 10px; margin-bottom: 16px; border-radius: 8px;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="md-btn" onclick="adminCreateUser()" style="flex: 1; padding: 10px;">Create User</button>
+                    <button class="md-btn md-btn-secondary" onclick="hideAddUserForm()" style="flex: 1; padding: 10px;">Cancel</button>
+                </div>
+            </div>
+
+            <div class="admin-filter-bar">
+                <input type="text" id="admin-search-input" class="admin-search" placeholder="Search by name or email..." onkeyup="filterAdminList()">
+                <button class="filter-btn active" onclick="setAdminFilter('all', this)">All</button>
+                <button class="filter-btn" onclick="setAdminFilter('pending', this)">Pending</button>
+                <button class="filter-btn" onclick="setAdminFilter('active', this)">Active</button>
+                <button class="filter-btn" onclick="setAdminFilter('inactive', this)">Blocked</button>
+            </div>
+
+            <div class="admin-user-list" id="admin-user-list">
+                </div>
+        </div>
+    </div>
+
+    <header class="top-bar">
+        <div class="header-title">
+            <span class="material-symbols-outlined">public</span>
+            <strong>Number Tools by M. H. MAHIM</strong>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button id="admin-btn" class="icon-btn-header" onclick="openAdminPanel()" title="Admin Dashboard" style="display: none;">
+                <span class="material-symbols-outlined">manage_accounts</span>
+                <span id="admin-badge" class="notification-badge">0</span>
+            </button>
+            <button id="profile-btn" class="icon-btn-header" onclick="openProfilePanel()" title="My Account" style="display: none;">
+                <span class="material-symbols-outlined">account_circle</span>
+            </button>
+            <button class="icon-btn-header" onclick="toggleThemeManual()" title="Toggle Theme">
+                <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+            </button>
+            <button id="logout-btn" class="icon-btn-header" onclick="handleLogout()" title="Logout" style="display: none;">
+                <span class="material-symbols-outlined">logout</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="toast" class="toast">Action Successful!</div>
+
+    <div id="auth-container">
+        <div class="auth-view active" id="view-login">
+            <div class="auth-icon-wrapper">
+                <span class="material-symbols-outlined" style="font-size: 40px; color: var(--md-sys-color-primary);">vpn_key</span>
+            </div>
+            <h2 style="margin: 0 0 8px 0;">Welcome Back</h2>
+            <p style="color: var(--md-sys-color-on-surface-variant); margin-bottom: 32px; font-size: 15px;">Sign in to access tools.</p>
+            
+            <div style="position: relative; margin-bottom: 16px;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 16px; top: 16px; color: var(--md-sys-color-outline);">mail</span>
+                <input type="email" id="login-email" class="md-input" placeholder="Email Address" style="padding-left: 48px; margin-bottom: 0;">
+            </div>
+
+            <div style="position: relative; margin-bottom: 24px;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 16px; top: 16px; color: var(--md-sys-color-outline);">lock</span>
+                <input type="password" id="login-pass" class="md-input" placeholder="Password" style="padding-left: 48px; padding-right: 50px; margin-bottom: 0;">
+                <span class="material-symbols-outlined" onclick="togglePass('login-pass', this)" style="position: absolute; right: 16px; top: 16px; cursor: pointer; color: var(--md-sys-color-outline);">visibility_off</span>
+            </div>
+
+            <button class="md-btn" onclick="handleLogin()" style="width: 100%; margin-bottom: 24px; padding: 16px;">
+                <span class="material-symbols-outlined">login</span> Log In
+            </button>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="md-btn-link" onclick="handleForgotPassword()">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">password</span> Forgot Password?
+                </button>
+                <button class="md-btn-link" onclick="switchAuthView('signup')">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">person_add</span> Request Account Access
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-view" id="view-signup">
+            <div class="auth-icon-wrapper">
+                <span class="material-symbols-outlined" style="font-size: 40px; color: var(--md-sys-color-primary);">assignment_ind</span>
+            </div>
+            <h2 style="margin: 0 0 8px 0;">Request Access</h2>
+            <p style="color: var(--md-sys-color-on-surface-variant); margin-bottom: 24px; font-size: 15px;">Submit details for admin approval.</p>
+            
+            <div style="position: relative; margin-bottom: 16px;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 16px; top: 16px; color: var(--md-sys-color-outline);">person</span>
+                <input type="text" id="signup-name" class="md-input" placeholder="Your Full Name" style="padding-left: 48px; margin-bottom: 0;">
+            </div>
+
+            <div style="position: relative; margin-bottom: 16px;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 16px; top: 16px; color: var(--md-sys-color-outline);">mail</span>
+                <input type="email" id="signup-email" class="md-input" placeholder="Valid Email Address" style="padding-left: 48px; margin-bottom: 0;">
+            </div>
+
+            <div style="position: relative; margin-bottom: 16px;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 16px; top: 16px; color: var(--md-sys-color-outline);">lock</span>
+                <input type="password" id="signup-pass" class="md-input" placeholder="Password (Min. 6 chars)" style="padding-left: 48px; padding-right: 48px; margin-bottom: 0;">
+                <span class="material-symbols-outlined" onclick="togglePass('signup-pass', this)" style="position: absolute; right: 16px; top: 16px; cursor: pointer; color: var(--md-sys-color-outline);">visibility_off</span>
+            </div>
+
+            <div style="position: relative; margin-bottom: 24px;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 16px; top: 16px; color: var(--md-sys-color-outline);">lock_reset</span>
+                <input type="password" id="signup-confirm" class="md-input" placeholder="Confirm Password" style="padding-left: 48px; padding-right: 48px; margin-bottom: 0;">
+                <span class="material-symbols-outlined" onclick="togglePass('signup-confirm', this)" style="position: absolute; right: 16px; top: 16px; cursor: pointer; color: var(--md-sys-color-outline);">visibility_off</span>
+            </div>
+
+            <button class="md-btn" onclick="handleSignUp()" style="width: 100%; margin-bottom: 16px; padding: 16px;">
+                <span class="material-symbols-outlined">send</span> Submit Request
+            </button>
+            <button class="md-btn-link" onclick="switchAuthView('login')">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span> Back to Login
+            </button>
+        </div>
+
+        <div class="auth-view" id="view-pending">
+            <div class="pending-spinner"></div>
+            <h2 style="margin: 0 0 8px 0; color: var(--md-sys-color-primary);">Approval Pending</h2>
+            <p style="color: var(--md-sys-color-on-surface-variant); margin-bottom: 24px; font-size: 15px; line-height: 1.5;">Your account is currently under review. Please wait for an admin to approve your access. <br><br><b>This screen will unlock automatically.</b></p>
+            <button class="md-btn-outline" style="padding: 10px 24px; border-radius: 100px; cursor: pointer;" onclick="handleLogout()">Sign Out</button>
+        </div>
+    </div>
+
+    <main class="main-content" id="app-content" style="display: none;">
+        
+        <div class="container welcome-banner" id="welcome-banner">
+            <h2>Welcome, <span id="welcome-name">User</span> 👋</h2>
+        </div>
+
+        <div id="tabs-nav" class="tabs-container container">
+            <button class="tab-btn active" onclick="switchTab('tab-cc-remover', this)">
+                <span class="material-symbols-outlined">cleaning_services</span> CC Remover
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-number-filter', this)">
+                <span class="material-symbols-outlined">filter_list</span> Number Filter
+            </button>
+        </div>
+
+        <div id="tab-cc-remover" class="container tab-content active">
+            <div class="card">
+                <h2>🌍 Country Code Remover</h2>
+                <p class="desc">যেকোনো দেশের মিক্সড নম্বর থেকে কান্ট্রি কোড রিমুভ ও ডুপ্লিকেট স্কিপ করে ফ্রেশ নম্বর ফিল্টার করার টুল।</p>
+                
+                <div class="file-upload-wrapper">
+                    <input type="file" id="file-input" class="hidden-file-input" accept=".txt,.csv" onchange="handleFileUpload(event)">
+                    <label for="file-input" class="md-btn md-btn-secondary" style="margin: 0; cursor: pointer;">
+                        <span class="material-symbols-outlined">upload_file</span> Upload .txt / .csv
+                    </label>
+                    <span id="file-name-display" style="font-size: 14px; color: var(--md-sys-color-outline);">No file chosen</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="font-weight: 500; font-size: 14px;">📝 Paste Numbers Here</label>
+                    <button class="paste-btn" onclick="pasteFromClipboard('raw-numbers')">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">content_paste</span> Paste Box
+                    </button>
+                </div>
+                <textarea id="raw-numbers" class="md-input" rows="6" placeholder="কান্ট্রি কোড সহ নম্বর বা টেবিল এখানে পেস্ট করুন..."></textarea>
+                
+                <div style="display: flex; gap: 12px; width: 100%; align-items: stretch;">
+                    <button class="md-btn md-btn-outline" onclick="clearCCFields()" style="flex: 1; justify-content: center; height: 56px; padding: 0 16px;">
+                        <span class="material-symbols-outlined">delete_sweep</span> Clear Fields
+                    </button>
+                    <button class="md-btn" onclick="processNumbers()" style="flex: 1; justify-content: center; height: 56px; padding: 0 16px;">
+                        <span class="material-symbols-outlined">magic_button</span> Process Numbers
+                    </button>
+                </div>
+            </div>
+
+            <div id="cc-stats" class="stats-box"></div>
+            <div id="results-container"></div>
+            <div id="invalid-container" class="invalid-box">
+                <h3 style="color: var(--md-sys-color-error); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined">warning</span> Invalid Format</h3>
+                <textarea id="invalid-numbers-text" class="md-input" rows="4" readonly style="border-color: var(--md-sys-color-error);"></textarea>
+            </div>
+
+            <div class="help-section">
+                <div class="help-header" onclick="toggleHelp(this)">
+                    <h3><span class="material-symbols-outlined">menu_book</span> কীভাবে ব্যবহার করবেন? (User Guide)</h3>
+                    <span class="material-symbols-outlined toggle-icon" style="transition: transform 0.3s;">expand_more</span>
+                </div>
+                <div class="help-body">
+                    <ol>
+                        <li><b>ইনপুট (Input):</b> Paste বাটনে ক্লিক করে সরাসরি নম্বর বা টেবিল পেস্ট করুন অথবা ফাইল আপলোড করুন।</li>
+                        <li><b>প্রসেস (Process):</b> এরপর <b>Process Numbers</b> বাটনে ক্লিক করুন।</li>
+                        <li><b>লিস্ট ও ডাউনলোড:</b> কার্ড না খুলেই সরাসরি হেডারের আইকন থেকে txt ফাইল ডাউনলোড করতে পারবেন অথবা কার্ডে ক্লিক করে লিস্ট খুলতে পারবেন।</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-number-filter" class="container tab-content">
+            <div class="card">
+                <h2><span class="material-symbols-outlined" style="vertical-align: middle;">difference</span> Number Filter</h2>
+                <p class="desc">দুটি লিস্ট তুলনা করে স্বয়ংক্রিয়ভাবে কান্ট্রি কোড রিমুভ ও ডুপ্লিকেট স্কিপ করে ফ্রেশ নম্বর বের করার টুল।</p>
+                
+                <div class="row">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="font-weight: 500; font-size: 14px;">📥 Total Numbers</label>
+                            <button class="paste-btn" onclick="pasteFromClipboard('total-numbers')">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">content_paste</span> Paste
+                            </button>
+                        </div>
+                        <textarea id="total-numbers" class="md-input" rows="6" placeholder="কান্ট্রি কোড সহ নম্বর বা টেবিল এখানে পেস্ট করুন..."></textarea>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="font-weight: 500; font-size: 14px;">✅ Used Numbers</label>
+                            <button class="paste-btn" onclick="pasteFromClipboard('used-numbers')">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">content_paste</span> Paste
+                            </button>
+                        </div>
+                        <textarea id="used-numbers" class="md-input" rows="6" placeholder="কাজ হয়ে যাওয়া নম্বরগুলো এখানে দিন..."></textarea>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; width: 100%; align-items: stretch;">
+                    <button class="md-btn md-btn-outline" onclick="clearFilterFields()" style="flex: 1; justify-content: center; height: 56px; padding: 0 16px;">
+                        <span class="material-symbols-outlined">delete_sweep</span> Clear Fields
+                    </button>
+                    <button class="md-btn" onclick="filterUnusedNumbers()" style="flex: 1; justify-content: center; height: 56px; padding: 0 16px;">
+                        <span class="material-symbols-outlined">manage_search</span> Find Unused Numbers
+                    </button>
+                </div>
+            </div>
+
+            <div id="filter-stats" class="stats-box"></div>
+            <div id="filter-results-container"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container" style="display: flex; flex-direction: column; align-items: center; margin: 0 auto;">
+            <a href="https://t.me/mh_mahim" target="_blank" class="telegram-btn">
+                <div class="telegram-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.94z"/></svg></div>
+                @mh_mahim
+            </a>
+            <div class="copyright-badge">&copy; 2026 Number Tools. Secured by Firebase.</div>
+        </div>
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. ADMIN SETTING
+        // ==========================================
+        const ADMIN_EMAIL = "mahimmdmh@gmail.com"; 
+
+        // --- Auto Dark/Light Theme Logic ---
+        function getSystemTheme() { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('theme-icon').textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+        }
+        
+        // System Theme Default Load
+        applyTheme(getSystemTheme());
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { applyTheme(e.matches ? 'dark' : 'light'); });
+
+        function toggleThemeManual() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        // --- Time Tracker Logic ---
+        let trackerActive = false;
+        let sessionStartTime = 0;
+        let currentUserUid = null;
+
+        function startTracker(uid) {
+            if(trackerActive) return;
+            trackerActive = true;
+            currentUserUid = uid;
+            sessionStartTime = Date.now();
+            document.addEventListener("visibilitychange", handleVisibilityChange);
+            window.addEventListener("beforeunload", saveTimeSpent);
+        }
+
+        function stopTracker() {
+            if(!trackerActive) return;
+            saveTimeSpent();
+            trackerActive = false;
+            currentUserUid = null;
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("beforeunload", saveTimeSpent);
+        }
+
+        function handleVisibilityChange() {
+            if (document.hidden) { saveTimeSpent(); } 
+            else { sessionStartTime = Date.now(); }
+        }
+
+        async function saveTimeSpent() {
+            if (!trackerActive || !currentUserUid || sessionStartTime === 0) return;
+            let spentSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
+            if (spentSeconds > 0) {
+                sessionStartTime = Date.now();
+                try {
+                    await db.collection('users').doc(currentUserUid).update({
+                        total_usage_seconds: firebase.firestore.FieldValue.increment(spentSeconds)
+                    });
+                } catch (e) { console.log("Time sync err:", e); }
+            }
+        }
+
+        function formatTimeSpent(seconds) {
+            if(!seconds || seconds <= 0) return "0m";
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            if(h > 0) return `${h}h ${m}m`;
+            return `${m}m`;
+        }
+
+        // --- Custom Alert & Toasts ---
+        function showCustomAlert(title, message, type = 'info') {
+            const overlay = document.getElementById('custom-modal-overlay'); const modal = document.getElementById('custom-modal'); const icon = document.getElementById('modal-icon');
+            document.getElementById('modal-title').textContent = title; document.getElementById('modal-message').textContent = message;
+            icon.className = 'material-symbols-outlined modal-icon ' + type; icon.textContent = type === 'error' ? 'error' : (type === 'success' ? 'check_circle' : 'info');
+            overlay.style.display = 'flex'; setTimeout(() => modal.classList.add('show'), 10);
+        }
+        function closeModal() {
+            const modal = document.getElementById('custom-modal'); modal.classList.remove('show');
+            setTimeout(() => document.getElementById('custom-modal-overlay').style.display = 'none', 300);
+        }
+        function showToast(msg = "Success!") {
+            const toast = document.getElementById('toast'); toast.textContent = msg; toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+        function copyText(text) {
+            if (!navigator.clipboard) { showToast("Clipboard access denied."); return; }
+            navigator.clipboard.writeText(text).then(() => showToast("Copied!")).catch(() => showToast("Failed to copy!"));
+        }
+        function isOnline() {
+            if (!navigator.onLine) { showCustomAlert("No Internet", "Please check your internet connection.", "error"); return false; }
+            return true;
+        }
+
+        // --- Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfOKtrRieiAwUzvs4QtFLigavwnLgcwbI",
+            authDomain: "number-tools-mahim.firebaseapp.com",
+            projectId: "number-tools-mahim",
+            storageBucket: "number-tools-mahim.firebasestorage.app",
+            messagingSenderId: "57927718534",
+            appId: "1:57927718534:web:911baca0a09f0124c96307",
+            measurementId: "G-GGK9MHER91"
+        };
+        
+        // Initialize Main App
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Initialize Secondary App (For Admin to Add Users without logging out)
+        const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
+        const secondaryAuth = secondaryApp.auth();
+
+        let currentSessionId = localStorage.getItem('session_id') || Math.random().toString(36).substring(7);
+        localStorage.setItem('session_id', currentSessionId);
+        let unsubscribeSnapshot = null;
+        let adminUnsubscribe = null;
+        let isLoggingIn = false;
+        
+        let allUsersData = []; 
+        let currentAdminFilter = 'all';
+
+        auth.onAuthStateChanged(user => {
+            document.getElementById('global-loader').style.display = 'none';
+            if (user) {
+                if(isOnline()) initRealtimeAccess(user);
+                
+                if(user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                    document.getElementById('admin-btn').style.display = 'flex';
+                    initAdminListener();
+                } else {
+                    document.getElementById('admin-btn').style.display = 'none';
+                    if(adminUnsubscribe) { adminUnsubscribe(); adminUnsubscribe = null; }
+                }
+            } else {
+                stopTracker();
+                if(unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+                if(adminUnsubscribe) { adminUnsubscribe(); adminUnsubscribe = null; }
+                document.getElementById('admin-btn').style.display = 'none';
+                document.getElementById('profile-btn').style.display = 'none';
+                showAppMode(false);
+            }
+        });
+
+        // --- User Profile Panel & Change Password ---
+        function openProfilePanel() {
+            document.getElementById('profile-panel-overlay').style.display = 'flex';
+            setTimeout(() => document.getElementById('profile-panel-modal').classList.add('show'), 10);
+        }
+        function closeProfilePanel() {
+            document.getElementById('profile-panel-modal').classList.remove('show');
+            setTimeout(() => document.getElementById('profile-panel-overlay').style.display = 'none', 300);
+            
+            // Clear fields on close
+            document.getElementById('profile-current-pass').value = '';
+            document.getElementById('profile-new-pass').value = '';
+            document.getElementById('profile-confirm-pass').value = '';
+        }
+        
+        async function updateUserPassword() {
+            if(!isOnline()) return;
+            const currentPass = document.getElementById('profile-current-pass').value;
+            const newPass = document.getElementById('profile-new-pass').value;
+            const confirmPass = document.getElementById('profile-confirm-pass').value;
+
+            if(!currentPass || !newPass || !confirmPass) {
+                return showCustomAlert("Missing Fields", "Please fill in all password fields.", "error");
+            }
+            if(newPass.length < 6) {
+                return showCustomAlert("Weak Password", "New password must be at least 6 characters long.", "error");
+            }
+            if(newPass !== confirmPass) {
+                return showCustomAlert("Mismatch", "New passwords do not match.", "error");
+            }
+
+            const user = auth.currentUser;
+            if(!user) return;
+
+            document.getElementById('global-loader').style.display = 'flex';
+            try {
+                // Re-authenticate user
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+                await user.reauthenticateWithCredential(credential);
+                
+                // Update password
+                await user.updatePassword(newPass);
+                
+                showCustomAlert("Success!", "Your password has been changed successfully.", "success");
+                closeProfilePanel();
+            } catch(e) {
+                if(e.code === 'auth/wrong-password') {
+                    showCustomAlert("Error", "The current password you entered is incorrect.", "error");
+                } else {
+                    handleFirebaseError(e);
+                }
+            } finally {
+                document.getElementById('global-loader').style.display = 'none';
+            }
+        }
+
+        // --- In-App Admin Panel & Filters ---
+        function initAdminListener() {
+            if(adminUnsubscribe) adminUnsubscribe();
+            adminUnsubscribe = db.collection('users').orderBy('created_at', 'desc').onSnapshot(snap => {
+                allUsersData = [];
+                let pendingCount = 0, activeCount = 0, blockedCount = 0;
+                
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    data.uid = doc.id;
+                    allUsersData.push(data);
+                    if(data.status === 'pending') pendingCount++;
+                    else if(data.status === 'active') activeCount++;
+                    else if(data.status === 'inactive') blockedCount++;
+                });
+
+                document.getElementById('stat-total').textContent = allUsersData.length;
+                document.getElementById('stat-active').textContent = activeCount;
+                document.getElementById('stat-pending').textContent = pendingCount;
+                document.getElementById('stat-blocked').textContent = blockedCount;
+
+                const badge = document.getElementById('admin-badge');
+                if(pendingCount > 0) { badge.textContent = pendingCount; badge.style.display = 'block'; } 
+                else { badge.style.display = 'none'; }
+                
+                renderAdminList();
+            });
+        }
+
+        function renderAdminList() {
+            const searchQ = document.getElementById('admin-search-input').value.toLowerCase();
+            const listContainer = document.getElementById('admin-user-list');
+            let html = '';
+
+            const filteredData = allUsersData.filter(user => {
+                const matchSearch = user.name.toLowerCase().includes(searchQ) || user.email.toLowerCase().includes(searchQ);
+                const matchFilter = currentAdminFilter === 'all' || user.status === currentAdminFilter;
+                return matchSearch && matchFilter;
+            });
+
+            filteredData.forEach(data => {
+                let dateStr = "Date Unknown";
+                if(data.created_at) {
+                    const d = data.created_at.toDate();
+                    dateStr = d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}) + ', ' + d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+                }
+                
+                let timeStr = formatTimeSpent(data.total_usage_seconds || 0);
+
+                html += `
+                    <div class="user-row-admin">
+                        <div class="user-info">
+                            <h4 class="user-name">
+                                ${data.name} 
+                                <span class="status-badge ${data.status}">${data.status}</span>
+                            </h4>
+                            <p class="user-email">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">mail</span> ${data.email}
+                                <span class="material-symbols-outlined" onclick="copyText('${data.email}')" style="font-size: 14px; cursor: pointer; color: var(--md-sys-color-primary);" title="Copy Email">content_copy</span>
+                            </p>
+                            <div class="user-meta">
+                                <span><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">schedule</span> ${dateStr}</span>
+                                <span><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">timer</span> Used: <b>${timeStr}</b></span>
+                            </div>
+                        </div>
+                        <div class="admin-actions">
+                            ${data.status !== 'active' ? `<button class="admin-btn approve" onclick="changeUserStatus('${data.uid}', 'active')"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Approve</button>` : ''}
+                            ${data.status !== 'inactive' ? `<button class="admin-btn block" onclick="changeUserStatus('${data.uid}', 'inactive')"><span class="material-symbols-outlined" style="font-size: 16px;">block</span> Block</button>` : ''}
+                            <button class="admin-btn delete" onclick="deleteUserRecord('${data.uid}')" title="Delete User"><span class="material-symbols-outlined" style="font-size: 16px;">delete</span></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html || '<div style="text-align:center; padding:40px; color:var(--md-sys-color-outline);"><span class="material-symbols-outlined" style="font-size: 40px;">search_off</span><p>No matching users found.</p></div>';
+        }
+
+        function setAdminFilter(status, btnElement) {
+            currentAdminFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active'); renderAdminList();
+        }
+        function filterAdminList() { renderAdminList(); }
+        function openAdminPanel() { document.getElementById('admin-panel-overlay').style.display = 'flex'; setTimeout(() => document.getElementById('admin-panel-modal').classList.add('show'), 10); }
+        function closeAdminPanel() { document.getElementById('admin-panel-modal').classList.remove('show'); setTimeout(() => document.getElementById('admin-panel-overlay').style.display = 'none', 300); hideAddUserForm(); }
+        function changeUserStatus(uid, newStatus) { db.collection('users').doc(uid).update({status: newStatus}).then(() => showToast("Status updated!")).catch(e => showCustomAlert("Error", e.message, "error")); }
+        async function deleteUserRecord(uid) {
+            if(confirm("Are you sure you want to completely delete this user record?")) {
+                try { await db.collection('users').doc(uid).delete(); showToast("User record deleted."); } catch(e) { showCustomAlert("Error", e.message, "error"); }
+            }
+        }
+
+        // --- Custom Admin Add User Logic ---
+        function showAddUserForm() { document.getElementById('admin-add-user-section').style.display = 'block'; }
+        function hideAddUserForm() { 
+            document.getElementById('admin-add-user-section').style.display = 'none'; 
+            document.getElementById('new-user-name').value = '';
+            document.getElementById('new-user-email').value = '';
+            document.getElementById('new-user-pass').value = '';
+        }
+        
+        async function adminCreateUser() {
+            if(!isOnline()) return;
+            const name = document.getElementById('new-user-name').value.trim();
+            const email = document.getElementById('new-user-email').value.trim();
+            const pass = document.getElementById('new-user-pass').value;
+
+            if(!name || !email || !pass) return showCustomAlert("Missing Fields", "Please fill out all fields to add a user.", "error");
+            if(pass.length < 6) return showCustomAlert("Weak Password", "Password must be at least 6 characters long.", "error");
+
+            document.getElementById('global-loader').style.display = 'flex';
+            try {
+                const cred = await secondaryAuth.createUserWithEmailAndPassword(email, pass);
+                await db.collection('users').doc(cred.user.uid).set({
+                    name: name, 
+                    email: email, 
+                    status: 'active',
+                    total_usage_seconds: 0,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    last_active: firebase.firestore.FieldValue.serverTimestamp(),
+                    current_session: ''
+                });
+                await secondaryAuth.signOut();
+                hideAddUserForm();
+                showToast("Account Created Successfully!");
+            } catch(e) {
+                handleFirebaseError(e);
+            } finally {
+                document.getElementById('global-loader').style.display = 'none';
+            }
+        }
+
+        // --- Batch Admin Actions ---
+        async function approveAllPending() {
+            const pendingUsers = allUsersData.filter(u => u.status === 'pending');
+            if(pendingUsers.length === 0) return showToast("No pending requests.");
+            if(confirm(`Approve ${pendingUsers.length} pending users?`)) {
+                document.getElementById('global-loader').style.display = 'flex';
+                try {
+                    const batch = db.batch();
+                    pendingUsers.forEach(u => batch.update(db.collection('users').doc(u.uid), {status: 'active'}));
+                    await batch.commit(); showToast("All pending users approved!");
+                } catch(e) { showCustomAlert("Error", e.message, "error"); }
+                document.getElementById('global-loader').style.display = 'none';
+            }
+        }
+        async function clearAllBlocked() {
+            const blockedUsers = allUsersData.filter(u => u.status === 'inactive');
+            if(blockedUsers.length === 0) return showToast("No blocked users to delete.");
+            if(confirm(`Permanently DELETE ${blockedUsers.length} blocked users from database?`)) {
+                document.getElementById('global-loader').style.display = 'flex';
+                try {
+                    const batch = db.batch();
+                    blockedUsers.forEach(u => batch.delete(db.collection('users').doc(u.uid)));
+                    await batch.commit(); showToast("All blocked users deleted!");
+                } catch(e) { showCustomAlert("Error", e.message, "error"); }
+                document.getElementById('global-loader').style.display = 'none';
+            }
+        }
+        function exportUsersCSV() {
+            if(allUsersData.length === 0) return showToast("No data to export.");
+            let csvContent = "Name,Email,Status,Time Spent,Date Joined\n";
+            allUsersData.forEach(u => {
+                let dateStr = u.created_at ? u.created_at.toDate().toLocaleString() : "N/A";
+                let timeStr = formatTimeSpent(u.total_usage_seconds || 0);
+                let row = `"${u.name}","${u.email}","${u.status}","${timeStr}","${dateStr}"`;
+                csvContent += row + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob); link.download = "NumberTools_Users.csv";
+            link.style.display = "none"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            showToast("CSV Exported!");
+        }
+
+        // --- Auth Views ---
+        function switchAuthView(view) {
+            document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+        }
+
+        function showAppMode(isLoggedIn) {
+            document.getElementById('auth-container').style.display = isLoggedIn ? 'none' : 'flex';
+            document.getElementById('app-content').style.display = isLoggedIn ? 'flex' : 'none';
+            document.getElementById('logout-btn').style.display = isLoggedIn ? 'flex' : 'none';
+            
+            if(!isLoggedIn) { 
+                switchAuthView('login'); document.getElementById('login-pass').value = ''; 
+                document.getElementById('welcome-banner').style.display = 'none';
+                document.getElementById('profile-btn').style.display = 'none';
+            } else {
+                document.getElementById('profile-btn').style.display = 'flex';
+                document.getElementById('welcome-banner').style.display = 'block';
+            }
+        }
+
+        async function handleForgotPassword() {
+            if(!isOnline()) return;
+            const email = document.getElementById('login-email').value.trim();
+            if(!email) return showCustomAlert("Email Required", "Please enter your registered email address in the box first.", "info");
+            document.getElementById('global-loader').style.display = 'flex';
+            try { await auth.sendPasswordResetEmail(email); showCustomAlert("Link Sent!", "A password reset link has been sent to your email. Check your inbox or spam folder.", "success"); } 
+            catch(e) { handleFirebaseError(e); } finally { document.getElementById('global-loader').style.display = 'none'; }
+        }
+
+        async function handleSignUp() {
+            if(!isOnline()) return;
+            const name = document.getElementById('signup-name').value.trim(); const email = document.getElementById('signup-email').value.trim();
+            const pass = document.getElementById('signup-pass').value; const confirm = document.getElementById('signup-confirm').value;
+
+            if(!name || !email || !pass) return showCustomAlert("Missing Fields", "Please fill out all the fields.", "error");
+            if(pass.length < 6) return showCustomAlert("Weak Password", "Password must be at least 6 characters long.", "error");
+            if(pass !== confirm) return showCustomAlert("Password Mismatch", "Passwords do not match.", "error");
+            
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) return showCustomAlert("Invalid Format", "Enter a properly formatted email.", "error");
+
+            document.getElementById('global-loader').style.display = 'flex';
+            const domain = email.toLowerCase().split('@')[1];
+            try {
+                const dnsResponse = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+                const dnsData = await dnsResponse.json();
+                if(!dnsData.Answer || dnsData.Answer.length === 0) {
+                    document.getElementById('global-loader').style.display = 'none';
+                    return showCustomAlert("Fake Email Blocked", "The email domain does not exist or cannot receive emails. Use a real email provider.", "error");
+                }
+            } catch (err) { console.log("DNS Check bypassed due to network restrictions."); }
+
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.collection('users').doc(cred.user.uid).set({
+                    name: name, email: email, status: 'pending', total_usage_seconds: 0,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    last_active: firebase.firestore.FieldValue.serverTimestamp(),
+                    current_session: currentSessionId
+                });
+            } catch (e) { handleFirebaseError(e); } finally { document.getElementById('global-loader').style.display = 'none'; }
+        }
+
+        async function handleLogin() {
+            if(!isOnline()) return;
+            const email = document.getElementById('login-email').value.trim(); const pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return showCustomAlert("Credentials Required", "Enter both email and password.", "info");
+            
+            document.getElementById('global-loader').style.display = 'flex'; isLoggingIn = true;
+            try { 
+                const cred = await auth.signInWithEmailAndPassword(email, pass); 
+                await db.collection('users').doc(cred.user.uid).update({ current_session: currentSessionId, last_active: firebase.firestore.FieldValue.serverTimestamp() });
+            } catch (e) { handleFirebaseError(e); } finally { document.getElementById('global-loader').style.display = 'none'; isLoggingIn = false; }
+        }
+
+        function initRealtimeAccess(user) {
+            if(unsubscribeSnapshot) unsubscribeSnapshot();
+            unsubscribeSnapshot = db.collection('users').doc(user.uid).onSnapshot(async (snap) => {
+                document.getElementById('global-loader').style.display = 'none';
+                if(!snap.exists) { showCustomAlert("Access Denied", "No profile found in database.", "error"); auth.signOut(); return; }
+                
+                const data = snap.data(); const now = Date.now();
+
+                // Setup Profile Modal Info and Welcome Banner
+                document.getElementById('disp-profile-name').textContent = data.name;
+                document.getElementById('disp-profile-email').textContent = data.email;
+                document.getElementById('welcome-name').textContent = data.name;
+
+                if(data.last_active && (now - data.last_active.toMillis() > 604800000) && data.status === 'active') {
+                    await db.collection('users').doc(user.uid).update({status: 'inactive'});
+                    showCustomAlert("Session Expired", "Deactivated due to 7 days of inactivity.", "error"); auth.signOut(); return;
+                }
+                
+                if(data.current_session && data.current_session !== currentSessionId) {
+                    if (!isLoggingIn) { showCustomAlert("Security Alert", "Your account logged in from another device. Session terminated.", "error"); auth.signOut(); return; }
+                }
+
+                if(data.status === 'pending') { 
+                    stopTracker();
+                    document.getElementById('auth-container').style.display = 'flex'; document.getElementById('app-content').style.display = 'none'; 
+                    document.getElementById('logout-btn').style.display = 'none'; document.getElementById('profile-btn').style.display = 'none'; 
+                    switchAuthView('pending');
+                } 
+                else if(data.status === 'active') { 
+                    if(document.getElementById('app-content').style.display !== 'flex') {
+                        await db.collection('users').doc(user.uid).update({ last_active: firebase.firestore.FieldValue.serverTimestamp(), current_session: currentSessionId });
+                        showAppMode(true); showToast(`Welcome back, ${data.name}! 👋`);
+                        startTracker(user.uid);
+                    }
+                } else { stopTracker(); showCustomAlert("Account Blocked", "Your account has been restricted by Admin.", "error"); auth.signOut(); }
+            }, error => { handleFirebaseError(error); auth.signOut(); });
+        }
+
+        function handleLogout() { stopTracker(); auth.signOut(); showToast("Logged out successfully"); }
+
+        function handleFirebaseError(error) {
+            let msg = error.message;
+            if(error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+            else if(msg.toLowerCase().includes("offline") || error.code === 'unavailable') msg = "Cannot connect to server. Check your internet.";
+            else if(error.code === 'auth/email-already-in-use') msg = "This email is already registered.";
+            showCustomAlert("Error", msg, "error");
+        }
+
+        // --- Core Tool Logic ---
+        function togglePass(id, el) {
+            const input = document.getElementById(id);
+            if (input.type === 'password') { input.type = 'text'; el.textContent = 'visibility'; } 
+            else { input.type = 'password'; el.textContent = 'visibility_off'; }
+        }
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active'); btnElement.classList.add('active');
+        }
+        function toggleHelp(element) {
+            const body = element.nextElementSibling; const icon = element.querySelector('.toggle-icon');
+            if (body.style.display === 'none' || body.style.display === '') { body.style.display = 'block'; icon.style.transform = 'rotate(180deg)'; } 
+            else { body.style.display = 'none'; icon.style.transform = 'rotate(0deg)'; }
+        }
+        async function pasteFromClipboard(elementId) {
+            try { const text = await navigator.clipboard.readText(); if (text) { const element = document.getElementById(elementId); element.value = element.value ? element.value + '\n' + text : text; showToast("Pasted from clipboard!"); } } 
+            catch (err) { showCustomAlert("Permission Denied", "Please allow clipboard permission.", "error"); }
+        }
+        function handleFileUpload(event) {
+            const file = event.target.files[0]; const fileNameDisplay = document.getElementById('file-name-display');
+            if (!file) { fileNameDisplay.textContent = "No file chosen"; return; }
+            fileNameDisplay.textContent = file.name; const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('raw-numbers').value = e.target.result; }; reader.readAsText(file);
+        }
+        function clearCCFields() {
+            document.getElementById('raw-numbers').value = ''; document.getElementById('file-name-display').textContent = 'No file chosen'; document.getElementById('file-input').value = '';
+            document.getElementById('results-container').innerHTML = ''; document.getElementById('invalid-container').style.display = 'none'; document.getElementById('invalid-numbers-text').value = ''; 
+            document.getElementById('cc-stats').style.display = 'none'; showToast("Fields Cleared!");
+        }
+        function clearFilterFields() {
+            document.getElementById('total-numbers').value = ''; document.getElementById('used-numbers').value = '';
+            document.getElementById('filter-results-container').innerHTML = ''; document.getElementById('filter-stats').style.display = 'none'; showToast("Fields Cleared!");
+        }
+
+        function parseLineData(line) {
+            let range = "", payterm = "", rawNumStr = line.trim();
+            if (line.includes('\t')) {
+                const parts = line.split('\t').map(p => p.trim()).filter(p => p !== ''); let numIndex = -1;
+                for (let i = 0; i < parts.length; i++) {
+                    let stripped = parts[i].replace(/\D/g, ''); if (stripped.length >= 6 && !/[a-zA-Z]/.test(parts[i])) { numIndex = i; break; }
+                }
+                if (numIndex !== -1) { rawNumStr = parts[numIndex]; if (numIndex > 0) range = parts[0]; if (numIndex < parts.length - 1) payterm = parts[numIndex + 1]; }
+            }
+            return { rawNumStr, range, payterm };
+        }
+
+        function processNumbers() {
+            let rawText = document.getElementById('raw-numbers').value.replace(/"/g, '');
+            if(!rawText.trim()) return showToast("Nothing to process!");
+            document.getElementById('global-loader').style.display = 'flex';
+
+            setTimeout(() => {
+                const lines = rawText.split('\n'); const resultsContainer = document.getElementById('results-container');
+                const invalidContainer = document.getElementById('invalid-container'); const invalidText = document.getElementById('invalid-numbers-text');
+                const statsBox = document.getElementById('cc-stats');
+                
+                resultsContainer.innerHTML = ''; invalidContainer.style.display = 'none'; invalidText.value = ''; statsBox.style.display = 'none';
+
+                const groups = {}; const invalidNums = []; const regionNames = new Intl.DisplayNames(['en'], {type: 'region'});
+                let totalProcessed = 0; let uniqueAdded = 0;
+
+                lines.forEach(line => {
+                    if (!line.trim() || line.toLowerCase().includes('my payterm') || line.toLowerCase().includes('range')) return;
+                    const { rawNumStr, range, payterm } = parseLineData(line); let text = rawNumStr.trim();
+                    if (!text || /[a-zA-Z]/.test(text)) return; if ((text.match(/\d/g) || []).length < 6) return; 
+                    
+                    const originalText = text; if (!text.startsWith('+')) text = '+' + text;
+
+                    try {
+                        const phoneNumber = libphonenumber.parsePhoneNumber(text);
+                        if (phoneNumber && phoneNumber.isValid()) {
+                            totalProcessed++;
+                            const countryCode = phoneNumber.country; let countryName = "Unknown Country";
+                            if (countryCode) try { countryName = regionNames.of(countryCode); } catch(e) {}
+                            const finalNumber = phoneNumber.nationalNumber; const groupKey = `${countryName}|||${range}|||${payterm}`;
+                            if (!groups[groupKey]) groups[groupKey] = { country: countryName, range: range, payterm: payterm, nums: [] };
+                            
+                            if (!groups[groupKey].nums.includes(finalNumber)) {
+                                groups[groupKey].nums.push(finalNumber);
+                                uniqueAdded++;
+                            }
+                        } else invalidNums.push(originalText);
+                    } catch (error) { invalidNums.push(originalText); }
+                });
+
+                const duplicates = totalProcessed - uniqueAdded;
+                if (totalProcessed > 0) {
+                    statsBox.style.display = 'block';
+                    statsBox.innerHTML = `📊 <b>Scan Summary:</b> Processed ${totalProcessed} numbers. Skipped ${duplicates} duplicates. Extracted <b>${uniqueAdded} fresh numbers!</b>`;
+                }
+
+                if (Object.keys(groups).length === 0 && invalidNums.length === 0) {
+                    resultsContainer.innerHTML = '<div class="card"><p style="color: var(--md-sys-color-error); margin: 0; text-align: center;">⚠️ No valid numbers found.</p></div>';
+                } else {
+                    for (const [key, groupData] of Object.entries(groups)) {
+                        let title = `🌍 ${groupData.country}`; if (groupData.range) title += ` - ${groupData.range}`;
+                        createResultCard(resultsContainer, title, groupData.nums, groupData.country, groupData.range, groupData.payterm);
+                    }
+                }
+                if (invalidNums.length > 0) { invalidContainer.style.display = 'block'; invalidText.value = invalidNums.join('\n'); }
+                document.getElementById('global-loader').style.display = 'none';
+            }, 50);
+        }
+
+        function filterUnusedNumbers() {
+            const totalText = document.getElementById('total-numbers').value.replace(/"/g, '');
+            const usedText = document.getElementById('used-numbers').value.replace(/"/g, '');
+            if (!totalText.trim()) return showToast("Total numbers box is empty.");
+            
+            document.getElementById('global-loader').style.display = 'flex';
+            setTimeout(() => {
+                const totalLines = totalText.split('\n'); const usedLines = usedText.split(/[\n,\t;]+/);
+                const resultsContainer = document.getElementById('filter-results-container'); const statsBox = document.getElementById('filter-stats');
+                resultsContainer.innerHTML = ''; statsBox.style.display = 'none';
+
+                const usedNationalSet = new Set();
+                usedLines.forEach(line => {
+                    let text = line.trim(); if (!text || /[a-zA-Z]/.test(text)) return; if (!text.startsWith('+')) text = '+' + text;
+                    try { const parsed = libphonenumber.parsePhoneNumber(text); if (parsed && parsed.isValid()) usedNationalSet.add(parsed.nationalNumber); } catch(e) {}
+                });
+
+                const groups = {}; const regionNames = new Intl.DisplayNames(['en'], {type: 'region'});
+                let totalProcessedCount = 0; let totalUnusedCount = 0;
+
+                totalLines.forEach(line => {
+                    if (!line.trim() || line.toLowerCase().includes('my payterm') || line.toLowerCase().includes('range')) return;
+                    const { rawNumStr, range, payterm } = parseLineData(line); let text = rawNumStr.trim();
+                    if (!text || /[a-zA-Z]/.test(text)) return; if ((text.match(/\d/g) || []).length < 6) return;
+                    if (!text.startsWith('+')) text = '+' + text;
+
+                    try {
+                        const parsed = libphonenumber.parsePhoneNumber(text);
+                        if (parsed && parsed.isValid()) {
+                            totalProcessedCount++; const nationalNum = parsed.nationalNumber;
+                            if (!usedNationalSet.has(nationalNum)) {
+                                let countryName = "Unknown Country"; if (parsed.country) try { countryName = regionNames.of(parsed.country); } catch(e){}
+                                const groupKey = `${countryName}|||${range}|||${payterm}`;
+                                if (!groups[groupKey]) groups[groupKey] = { country: countryName, range: range, payterm: payterm, nums: [] };
+                                if (!groups[groupKey].nums.includes(nationalNum)) { groups[groupKey].nums.push(nationalNum); totalUnusedCount++; }
+                            }
+                        }
+                    } catch(e) {}
+                });
+
+                const matchedUsedCount = totalProcessedCount - totalUnusedCount;
+                if (totalProcessedCount > 0) {
+                    statsBox.style.display = 'block';
+                    statsBox.innerHTML = `📊 <b>Scan Summary:</b> Processed ${totalProcessedCount} valid numbers. Found ${matchedUsedCount} used/duplicate numbers. Extracted <b>${totalUnusedCount} fresh numbers!</b>`;
+                }
+
+                if (totalUnusedCount === 0) {
+                    resultsContainer.innerHTML = '<div class="card" style="text-align:center;"><span class="material-symbols-outlined" style="font-size: 48px; color: var(--md-sys-color-primary);">done_all</span><h3 style="margin-top: 10px;">All numbers are used!</h3><p style="margin:0; color: var(--md-sys-color-outline);">There are no unused numbers left in your list.</p></div>';
+                } else {
+                    for (const [key, groupData] of Object.entries(groups)) {
+                        let title = `🎯 Fresh: ${groupData.country}`; if (groupData.range) title += ` - ${groupData.range}`;
+                        createResultCard(resultsContainer, title, groupData.nums, groupData.country, groupData.range, groupData.payterm);
+                    }
+                }
+                document.getElementById('global-loader').style.display = 'none';
+            }, 50);
+        }
+
+        function createResultCard(containerElement, title, numsArray, countryName, metaRange = "", metaPayterm = "") {
+            const count = numsArray.length; const card = document.createElement('div'); card.className = 'country-card';
+            let paytermHTML = ""; if (metaPayterm && metaPayterm.trim() !== "") paytermHTML = `<span class="payterm-badge">Payterm: ${metaPayterm}</span>`;
+
+            const textData = numsArray.join('\\n'); const jsonNums = JSON.stringify(numsArray).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeRange = metaRange.replace(/['"\\]/g, ""); const safePayterm = metaPayterm.replace(/['"\\]/g, "");
+
+            const header = document.createElement('div'); header.className = 'country-header';
+            header.innerHTML = `
+                <div style="flex: 1; min-width: 0; text-align: left;">
+                    <h3 style="margin: 0; font-size: 16px; display: inline-block; vertical-align: middle;">${title}</h3>
+                    ${paytermHTML}
+                    <div style="margin-top: 4px;"><small style="color: var(--md-sys-color-outline); font-weight: 500;">📊 Output: ${count}</small></div>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-left: 8px;">
+                    <button class="header-icon-btn" onclick="event.stopPropagation(); downloadFile('${countryName}', '${textData}', 'txt', ${count}, '${safeRange}', '${safePayterm}')" title="Quick Download TXT">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">description</span>
+                    </button>
+                    <span class="material-symbols-outlined toggle-icon" style="transition: transform 0.3s; margin-left: 4px; color: var(--md-sys-color-on-surface);">expand_more</span>
+                </div>
+            `;
+
+            const bodyContainer = document.createElement('div'); bodyContainer.className = 'accordion-body';
+            bodyContainer.innerHTML = `
+                <div class="card-actions">
+                    <button class="md-btn md-btn-secondary" onclick="copyAll('${jsonNums}')" title="Copy All"><span class="material-symbols-outlined">content_copy</span> Copy All</button>
+                    <button class="md-btn md-btn-secondary" onclick="downloadFile('${countryName}', '${textData}', 'txt', ${count}, '${safeRange}', '${safePayterm}')" title="Download as TXT"><span class="material-symbols-outlined">description</span> CSV/TXT</button>
+                    <button class="md-btn md-btn-secondary" onclick="shareToApp('${textData}')" title="Share to Float Text"><span class="material-symbols-outlined">share</span> Share</button>
+                </div>
+            `;
+
+            const list = document.createElement('div'); list.className = 'number-list';
+            numsArray.forEach(num => {
+                const row = document.createElement('div'); row.className = 'number-row';
+                const numText = document.createElement('span'); numText.textContent = num; numText.style.textAlign = 'left';
+                const copyBtn = document.createElement('button'); copyBtn.className = 'icon-btn'; copyBtn.title = "Copy this number";
+                copyBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>';
+                copyBtn.onclick = () => copyText(num);
+                row.appendChild(numText); row.appendChild(copyBtn); list.appendChild(row);
+            });
+            bodyContainer.appendChild(list);
+
+            header.onclick = function() {
+                const icon = this.querySelector('.toggle-icon');
+                if (bodyContainer.style.display === 'none' || bodyContainer.style.display === '') { bodyContainer.style.display = 'block'; icon.style.transform = 'rotate(180deg)'; } 
+                else { bodyContainer.style.display = 'none'; icon.style.transform = 'rotate(0deg)'; }
+            };
+
+            card.appendChild(header); card.appendChild(bodyContainer); containerElement.appendChild(card);
+        }
+
+        function copyAll(jsonArrayStr) {
+            try { const decodedStr = jsonArrayStr.replace(/&quot;/g, '"'); const nums = JSON.parse(decodedStr); const text = nums.join('\n'); copyText(text); } 
+            catch (e) { showToast("Failed to copy all!"); }
+        }
+
+        async function shareToApp(textData) {
+            if (!navigator.canShare || !navigator.share) { showCustomAlert("Not Supported", "Your browser does not support sharing.", "error"); return; }
+            const blob = new Blob([textData], { type: 'text/plain' });
+            const file = new File([blob], "Number_List.txt", { type: 'text/plain' });
+            try { await navigator.share({ title: 'Extracted Numbers', files: [file] }); } 
+            catch (error) { console.log("Sharing cancelled."); }
+        }
+
+        function downloadFile(country, textData, type, count, autoRange, autoPayterm) {
+            let data = textData; let mimeType = 'text/plain'; let safeCountryName = country.replace(/[^a-zA-Z0-9 -]/g, "").trim(); 
+            if (safeCountryName === "Unknown Country") safeCountryName = "Unused_Numbers";
+            let filename = "";
+
+            if (autoRange && autoPayterm) {
+                let safeRange = autoRange.replace(/[^a-zA-Z0-9 -_]/g, "").trim(); let safePayterm = autoPayterm.replace(/[^a-zA-Z0-9 -_]/g, "").trim();
+                filename = `${safePayterm}_${safeRange}(${count}).${type}`;
+            } else {
+                let userPayterm = prompt(`Enter Payterm for ${safeCountryName} (e.g., Daily, Weekly) বা ফাঁকা রাখুন:`, "");
+                if (userPayterm !== null && userPayterm.trim() !== "") { let safePayterm = userPayterm.replace(/[^a-zA-Z0-9 -_]/g, "").trim(); filename = `${safeCountryName}_${safePayterm}(${count}).${type}`; } 
+                else { filename = `${safeCountryName}(${count}).${type}`; }
+            }
+
+            if (type === 'csv') { mimeType = 'text/csv'; data = "Phone Number\n" + data; }
+
+            const blob = new Blob([data], { type: mimeType }); const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast(`Downloaded ${filename}`);
+        }
+    </script>
+</body>
+</html>
